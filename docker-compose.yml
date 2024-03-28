@@ -8,11 +8,11 @@ services:
     network_mode: "bridge"
     environment:
       - SSH_ENABLE_ROOT=true
-    ports:
-      - "3000:3000"
-      - "2223:2223"
     volumes:
-      - ./secrets/id_rsa.pub:/root/.ssh/authorized_keys
+      - ./secrets/id_rsa_container.pub:/root/.ssh/authorized_keys
+    ports:
+      - 3000:3000
+      - 2223:2223
   managedhost-app-2:
     build: 
       context: managed-host/alpine/app2
@@ -20,11 +20,11 @@ services:
     network_mode: "bridge"
     environment:
       - SSH_ENABLE_ROOT=true
-    ports:
-      - "3001:3000"
-      - "2224:2224"
     volumes:
-      - ./secrets/id_rsa.pub:/root/.ssh/authorized_keys
+      - ./secrets/id_rsa_container.pub:/root/.ssh/authorized_keys
+    ports:
+      - 3001:3000
+      - 2224:2224
   managedhost-app-3:
     build: 
       context: managed-host/alpine/app3
@@ -32,8 +32,26 @@ services:
     network_mode: "bridge"
     environment:
       - SSH_ENABLE_ROOT=true
-    ports:
-      - "3002:3000"
-      - "2225:2225"
     volumes:
-      - ./secrets/id_rsa.pub:/root/.ssh/authorized_keys
+      - ./secrets/id_rsa_container.pub:/root/.ssh/authorized_keys
+    ports:
+      - 3002:3000
+      - 2225:2225
+  loadbalancer:
+    build:
+      context: loadbalancer
+    restart: unless-stopped
+    network_mode: "bridge"
+    environment:
+      - SSH_ENABLE_ROOT=true
+    volumes:
+      - ./secrets/id_rsa_container.pub:/root/.ssh/authorized_keys
+      - ./nginx.cfg:/etc/nginx/nginx.conf:ro
+    expose:
+      - 80
+    ports:
+      - 2226:2226
+    depends_on:
+      - managedhost-app-1
+      - managedhost-app-2
+      - managedhost-app-3
